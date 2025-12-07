@@ -27,23 +27,23 @@ static bool is_on_circle(int col, int row) {
 
 // Check if a dot is on a marker line (12, 3, 6, 9) - inside the circle
 static bool is_on_marker(int col, int row) {
-  // 12 o'clock (top) - vertical line going inward
-  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS + 1 && row <= CENTER_Y - CLOCK_RADIUS + 3) {
+  // 12 o'clock (top) - vertical line going inward (2 dots)
+  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS + 1 && row <= CENTER_Y - CLOCK_RADIUS + 2) {
     return true;
   }
 
-  // 3 o'clock (right) - horizontal line going inward
-  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 3 && col <= CENTER_X + CLOCK_RADIUS - 1) {
+  // 3 o'clock (right) - horizontal line going inward (2 dots)
+  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 2 && col <= CENTER_X + CLOCK_RADIUS - 1) {
     return true;
   }
 
-  // 6 o'clock (bottom) - vertical line going inward
-  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 3 && row <= CENTER_Y + CLOCK_RADIUS - 1) {
+  // 6 o'clock (bottom) - vertical line going inward (2 dots)
+  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 2 && row <= CENTER_Y + CLOCK_RADIUS - 1) {
     return true;
   }
 
-  // 9 o'clock (left) - horizontal line going inward
-  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS + 1 && col <= CENTER_X - CLOCK_RADIUS + 3) {
+  // 9 o'clock (left) - horizontal line going inward (2 dots)
+  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS + 1 && col <= CENTER_X - CLOCK_RADIUS + 2) {
     return true;
   }
 
