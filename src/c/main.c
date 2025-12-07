@@ -204,9 +204,17 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
         graphics_context_set_fill_color(ctx, GColorWhite);
         graphics_fill_circle(ctx, GPoint(x + DOT_SIZE/2, y + DOT_SIZE/2), DOT_SIZE/2);
       } else {
-        // Draw hollow circle
-        graphics_context_set_stroke_color(ctx, GColorWhite);
-        graphics_draw_circle(ctx, GPoint(x + DOT_SIZE/2, y + DOT_SIZE/2), DOT_SIZE/2);
+        // Draw dotted circle (4 dots at cardinal directions)
+        graphics_context_set_fill_color(ctx, GColorWhite);
+        int cx = x + DOT_SIZE/2;
+        int cy = y + DOT_SIZE/2;
+        int r = DOT_SIZE/2;
+
+        // Draw 4 small dots at top, right, bottom, left
+        graphics_fill_circle(ctx, GPoint(cx, cy - r), 0);     // top
+        graphics_fill_circle(ctx, GPoint(cx + r, cy), 0);     // right
+        graphics_fill_circle(ctx, GPoint(cx, cy + r), 0);     // bottom
+        graphics_fill_circle(ctx, GPoint(cx - r, cy), 0);     // left
       }
     }
   }
