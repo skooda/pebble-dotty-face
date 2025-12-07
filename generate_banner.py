@@ -2,8 +2,8 @@
 import math
 from PIL import Image, ImageDraw, ImageFont
 
-# Create banner (625x250)
-img = Image.new('RGB', (625, 250), color='black')
+# Create banner (720x320)
+img = Image.new('RGB', (720, 320), color='black')
 draw = ImageDraw.Draw(img)
 
 # Draw title
@@ -15,13 +15,13 @@ except:
     font_small = ImageFont.load_default()
 
 # Title
-draw.text((20, 80), "Dotty Face", fill='white', font=font_large)
-draw.text((20, 160), "Minimalist Analog Watchface", fill='white', font=font_small)
+draw.text((30, 100), "Dotty Face", fill='white', font=font_large)
+draw.text((30, 190), "Minimalist Analog Watchface", fill='white', font=font_small)
 
 # Draw a small preview of the watchface on the right
-preview_size = 180
-preview_x = 625 - preview_size - 35
-preview_y = 35
+preview_size = 220
+preview_x = 720 - preview_size - 50
+preview_y = 50
 
 # Mini dot matrix preview
 grid_size = 17
