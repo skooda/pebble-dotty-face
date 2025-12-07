@@ -10,7 +10,7 @@
     "uuid": "89ab4b75-b828-46ef-8417-73a5fda21baa",
     "sdkVersion": "3",
     "enableMultiJS": true,
-    "targetPlatforms": ["basalt", "chalk", "diorite"],
+    "targetPlatforms": ["basalt", "chalk", "diorite", "emery"],
     "watchapp": {
       "watchface": true
     },

@@ -1,50 +1,53 @@
 #include <pebble.h>
 
-#define GRID_WIDTH 17
-#define GRID_HEIGHT 21
 #define DOT_SIZE 7
 #define DOT_MARGIN 1
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
-#define CENTER_X 8
-#define CENTER_Y 10
-#define CLOCK_RADIUS 8.0
-#define HOUR_HAND_LENGTH 4
-#define MINUTE_HAND_LENGTH 6
 
 static Window *s_main_window;
 static Layer *s_canvas_layer;
 static int s_hours;
 static int s_minutes;
 
+// Platform-specific grid dimensions (calculated at runtime)
+static int grid_width;
+static int grid_height;
+static int center_x;
+static int center_y;
+static int clock_radius;
+static int hour_hand_length;
+static int minute_hand_length;
+
 // Check if a dot is on the clock circle perimeter
 static bool is_on_circle(int col, int row) {
-  int dx = col - CENTER_X;
-  int dy = row - CENTER_Y;
+  int dx = col - center_x;
+  int dy = row - center_y;
   int dist_squared = dx * dx + dy * dy;
 
-  // Radius 8.0 squared = 64, check around 56-72
-  return (dist_squared >= 56 && dist_squared <= 72);
+  // Dynamic radius check
+  int radius_squared = clock_radius * clock_radius;
+  return (dist_squared >= radius_squared - 8 && dist_squared <= radius_squared + 8);
 }
 
 // Check if a dot is on a marker line (12, 3, 6, 9) - inside the circle
 static bool is_on_marker(int col, int row) {
   // 12 o'clock (top) - vertical line going inward (2 dots)
-  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS + 1 && row <= CENTER_Y - CLOCK_RADIUS + 2) {
+  if (col == center_x && row >= center_y - clock_radius + 1 && row <= center_y - clock_radius + 2) {
     return true;
   }
 
   // 3 o'clock (right) - horizontal line going inward (2 dots)
-  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 2 && col <= CENTER_X + CLOCK_RADIUS - 1) {
+  if (row == center_y && col >= center_x + clock_radius - 2 && col <= center_x + clock_radius - 1) {
     return true;
   }
 
   // 6 o'clock (bottom) - vertical line going inward (2 dots)
-  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 2 && row <= CENTER_Y + CLOCK_RADIUS - 1) {
+  if (col == center_x && row >= center_y + clock_radius - 2 && row <= center_y + clock_radius - 1) {
     return true;
   }
 
   // 9 o'clock (left) - horizontal line going inward (2 dots)
-  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS + 1 && col <= CENTER_X - CLOCK_RADIUS + 2) {
+  if (row == center_y && col >= center_x - clock_radius + 1 && col <= center_x - clock_radius + 2) {
     return true;
   }
 
@@ -65,8 +68,8 @@ static int isqrt(int n) {
 
 // Bresenham's line algorithm - check if a dot is on the line
 static bool is_on_line(int col, int row, int end_x, int end_y) {
-  int x0 = CENTER_X;
-  int y0 = CENTER_Y;
+  int x0 = center_x;
+  int y0 = center_y;
   int x1 = end_x;
   int y1 = end_y;
 
@@ -131,8 +134,8 @@ static bool is_on_hour_hand(int col, int row) {
   int hour_angle = (s_hours % 12) * 30 + s_minutes / 2;
 
   // Calculate end point of hour hand (scaled by 1000)
-  int end_x = CENTER_X * 1000 + HOUR_HAND_LENGTH * 1000 * get_sin(hour_angle) / 1000;
-  int end_y = CENTER_Y * 1000 - HOUR_HAND_LENGTH * 1000 * get_cos(hour_angle) / 1000;
+  int end_x = center_x * 1000 + hour_hand_length * 1000 * get_sin(hour_angle) / 1000;
+  int end_y = center_y * 1000 - hour_hand_length * 1000 * get_cos(hour_angle) / 1000;
 
   return is_on_line(col, row, end_x / 1000, end_y / 1000);
 }
@@ -143,15 +146,15 @@ static bool is_on_minute_hand(int col, int row) {
   int minute_angle = s_minutes * 6;
 
   // Calculate end point of minute hand (scaled by 1000)
-  int end_x = CENTER_X * 1000 + MINUTE_HAND_LENGTH * 1000 * get_sin(minute_angle) / 1000;
-  int end_y = CENTER_Y * 1000 - MINUTE_HAND_LENGTH * 1000 * get_cos(minute_angle) / 1000;
+  int end_x = center_x * 1000 + minute_hand_length * 1000 * get_sin(minute_angle) / 1000;
+  int end_y = center_y * 1000 - minute_hand_length * 1000 * get_cos(minute_angle) / 1000;
 
   return is_on_line(col, row, end_x / 1000, end_y / 1000);
 }
 
 // Check if a dot is the center dot
 static bool is_center_dot(int col, int row) {
-  return (col == CENTER_X && row == CENTER_Y);
+  return (col == center_x && row == center_y);
 }
 
 static bool is_dot_filled(int col, int row) {
@@ -183,17 +186,17 @@ static bool is_dot_filled(int col, int row) {
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
-  // Calculate grid dimensions
-  int grid_width = GRID_WIDTH * DOT_SIZE + (GRID_WIDTH - 1) * DOT_MARGIN;
-  int grid_height = GRID_HEIGHT * DOT_SIZE + (GRID_HEIGHT - 1) * DOT_MARGIN;
+  // Calculate grid pixel dimensions
+  int grid_pixel_width = grid_width * DOT_SIZE + (grid_width - 1) * DOT_MARGIN;
+  int grid_pixel_height = grid_height * DOT_SIZE + (grid_height - 1) * DOT_MARGIN;
 
   // Center the grid
-  int offset_x = (bounds.size.w - grid_width) / 2;
-  int offset_y = (bounds.size.h - grid_height) / 2;
+  int offset_x = (bounds.size.w - grid_pixel_width) / 2;
+  int offset_y = (bounds.size.h - grid_pixel_height) / 2;
 
   // Draw grid of dots
-  for (int row = 0; row < GRID_HEIGHT; row++) {
-    for (int col = 0; col < GRID_WIDTH; col++) {
+  for (int row = 0; row < grid_height; row++) {
+    for (int col = 0; col < grid_width; col++) {
       int x = offset_x + col * DOT_SPACING;
       int y = offset_y + row * DOT_SPACING;
 
@@ -237,6 +240,27 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
+
+  // Calculate grid dimensions based on platform
+  // Basalt/Diorite: 144x168, Chalk: 180x180, Emery: 200x228
+  int max_dots_width = (bounds.size.w - 8) / DOT_SPACING;
+  int max_dots_height = (bounds.size.h - 8) / DOT_SPACING;
+
+  // Make grid width odd so we have a center column
+  grid_width = (max_dots_width % 2 == 1) ? max_dots_width : max_dots_width - 1;
+  grid_height = (max_dots_height % 2 == 1) ? max_dots_height : max_dots_height - 1;
+
+  // Calculate center and clock parameters
+  center_x = grid_width / 2;
+  center_y = grid_height / 2;
+
+  // Scale clock radius based on the smaller dimension
+  int min_dimension = (grid_width < grid_height) ? grid_width : grid_height;
+  clock_radius = (min_dimension / 2) - 1;
+
+  // Scale hand lengths proportionally
+  hour_hand_length = clock_radius / 2;
+  minute_hand_length = (clock_radius * 3) / 4;
 
   // Set background to black
   window_set_background_color(window, GColorBlack);
