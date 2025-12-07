@@ -1,0 +1,22 @@
+{
+  "name": "dotty-face",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Dotty Face",
+    "uuid": "89ab4b75-b828-46ef-8417-73a5fda21baa",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": ["basalt", "chalk", "diorite"],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [],
+    "resources": {
+      "media": []
+    }
+  }
+}
