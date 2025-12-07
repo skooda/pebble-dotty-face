@@ -223,39 +223,65 @@ static const uint8_t DAY_LETTERS[7][3] = {
 
 static bool is_dot_filled(int col, int row) {
   // Layout:
-  // Rows 0-4: Day of week (3 letters, 5 rows)
-  // Row 5: spacing
-  // Rows 6-12: Time HH:MM (7 rows)
-  // Row 13: spacing
-  // Rows 14-16: Day of month (2 digits, use top 3 rows of digit pattern)
+  // Rows 1-5: Date line (day of week + day of month on same line)
+  // Rows 6-7: spacing
+  // Rows 8-14: Time HH:MM (7 rows)
+  // Rows 15-16: empty
 
-  // DAY OF WEEK (rows 0-4)
-  if (row >= 0 && row <= 4) {
-    // Center 3 letters (each 3 cols + 1 space = 11 cols total)
-    // Layout: cols 3-5, 6-8, 9-11 (starting at col 3)
+  // DATE LINE (rows 1-5): Day of week + Day of month
+  if (row >= 1 && row <= 5) {
+    int letter_row = row - 1; // Map to 0-4 for letter pattern
+
+    // Layout across 17 columns:
+    // Cols 0-2: Letter 1 (day of week)
+    // Cols 3-5: Letter 2
+    // Cols 6-8: Letter 3
+    // Col 9: space
+    // Cols 10-12: Day tens digit
+    // Cols 13-15: Day ones digit
+    // Col 16: empty
+
+    // Day of week letters
     int letter_idx = -1;
     int letter_col = -1;
 
-    if (col >= 3 && col <= 5) {
+    if (col >= 0 && col <= 2) {
       letter_idx = DAY_LETTERS[s_day_of_week][0];
-      letter_col = col - 3;
-    } else if (col >= 7 && col <= 9) {
+      letter_col = col;
+    } else if (col >= 3 && col <= 5) {
       letter_idx = DAY_LETTERS[s_day_of_week][1];
-      letter_col = col - 7;
-    } else if (col >= 11 && col <= 13) {
+      letter_col = col - 3;
+    } else if (col >= 6 && col <= 8) {
       letter_idx = DAY_LETTERS[s_day_of_week][2];
-      letter_col = col - 11;
+      letter_col = col - 6;
     }
 
     if (letter_idx >= 0 && letter_col >= 0 && letter_col <= 2) {
-      return LETTER_PATTERNS[letter_idx][row][letter_col] == 1;
+      return LETTER_PATTERNS[letter_idx][letter_row][letter_col] == 1;
     }
+
+    // Day of month digits (use 5 rows of digit pattern)
+    int digit = -1;
+    int digit_col = -1;
+
+    if (col >= 10 && col <= 12) {
+      digit = s_day_of_month / 10;
+      digit_col = col - 10;
+    } else if (col >= 13 && col <= 15) {
+      digit = s_day_of_month % 10;
+      digit_col = col - 13;
+    }
+
+    if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2 && letter_row < 7) {
+      return DIGIT_PATTERNS[digit][letter_row][digit_col] == 1;
+    }
+
     return false;
   }
 
-  // TIME (rows 6-12)
-  if (row >= 6 && row <= 12) {
-    int digit_row = row - 6; // Map to 0-6 for digit pattern
+  // TIME (rows 8-14)
+  if (row >= 8 && row <= 14) {
+    int digit_row = row - 8; // Map to 0-6 for digit pattern
 
     // Digit layout across 17 columns:
     // Cols 0-2: H tens
@@ -289,28 +315,6 @@ static bool is_dot_filled(int col, int row) {
     } else if (col >= 14 && col <= 16) {
       digit = s_minutes % 10;
       digit_col = col - 14;
-    }
-
-    if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2) {
-      return DIGIT_PATTERNS[digit][digit_row][digit_col] == 1;
-    }
-    return false;
-  }
-
-  // DAY OF MONTH (rows 14-16)
-  if (row >= 14 && row <= 16) {
-    int digit_row = row - 14; // Map to 0-2 (use top 3 rows of digit pattern)
-
-    // Center 2 digits (each 3 cols + 1 space = 7 cols total, start at col 5)
-    int digit = -1;
-    int digit_col = -1;
-
-    if (col >= 5 && col <= 7) {
-      digit = s_day_of_month / 10;
-      digit_col = col - 5;
-    } else if (col >= 9 && col <= 11) {
-      digit = s_day_of_month % 10;
-      digit_col = col - 9;
     }
 
     if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2) {
