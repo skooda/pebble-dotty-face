@@ -1,8 +1,8 @@
 #include <pebble.h>
 
 #define GRID_SIZE 16
-#define DOT_SIZE 3
-#define DOT_MARGIN 6
+#define DOT_SIZE 9
+#define DOT_MARGIN 0
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
 
 static Window *s_main_window;
