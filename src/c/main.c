@@ -4,323 +4,160 @@
 #define DOT_SIZE 7
 #define DOT_MARGIN 1
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
+#define CENTER_X 8
+#define CENTER_Y 8
+#define CLOCK_RADIUS 7.5
+#define HOUR_HAND_LENGTH 4
+#define MINUTE_HAND_LENGTH 6
 
 static Window *s_main_window;
 static Layer *s_canvas_layer;
 static int s_hours;
 static int s_minutes;
-static int s_day_of_month;
-static int s_day_of_week;
 
-// 3x7 digit patterns (0-9)
-// 1 = filled dot, 0 = hollow dot
-static const uint8_t DIGIT_PATTERNS[10][7][3] = {
-  { // 0
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1}
-  },
-  { // 1
-    {0,1,0},
-    {1,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {1,1,1}
-  },
-  { // 2
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {1,1,1},
-    {1,0,0},
-    {1,0,0},
-    {1,1,1}
-  },
-  { // 3
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {1,1,1}
-  },
-  { // 4
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {0,0,1}
-  },
-  { // 5
-    {1,1,1},
-    {1,0,0},
-    {1,0,0},
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {1,1,1}
-  },
-  { // 6
-    {1,1,1},
-    {1,0,0},
-    {1,0,0},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1}
-  },
-  { // 7
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0}
-  },
-  { // 8
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1}
-  },
-  { // 9
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1},
-    {0,0,1},
-    {0,0,1},
-    {1,1,1}
+// Check if a dot is on the clock circle perimeter
+static bool is_on_circle(int col, int row) {
+  int dx = col - CENTER_X;
+  int dy = row - CENTER_Y;
+  int dist_squared = dx * dx + dy * dy;
+
+  // Approximate: radius 7.5 squared = 56.25, so check around 49-64
+  return (dist_squared >= 49 && dist_squared <= 64);
+}
+
+// Check if a dot is on a marker line (12, 3, 6, 9)
+static bool is_on_marker(int col, int row) {
+  // 12 o'clock (top) - vertical line
+  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS - 1 && row <= CENTER_Y - CLOCK_RADIUS + 1) {
+    return true;
   }
-};
 
-// 3x5 letter patterns for days of week
-// Letters: A, D, E, F, H, I, M, N, O, R, S, T, U, W
-static const uint8_t LETTER_PATTERNS[14][5][3] = {
-  { // A (0)
-    {1,1,1},
-    {1,0,1},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1}
-  },
-  { // D (1)
-    {1,1,0},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,0}
-  },
-  { // E (2)
-    {1,1,1},
-    {1,0,0},
-    {1,1,1},
-    {1,0,0},
-    {1,1,1}
-  },
-  { // F (3)
-    {1,1,1},
-    {1,0,0},
-    {1,1,0},
-    {1,0,0},
-    {1,0,0}
-  },
-  { // H (4)
-    {1,0,1},
-    {1,0,1},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1}
-  },
-  { // I (5)
-    {1,1,1},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {1,1,1}
-  },
-  { // M (6)
-    {1,0,1},
-    {1,1,1},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1}
-  },
-  { // N (7)
-    {1,0,1},
-    {1,1,1},
-    {1,1,1},
-    {1,0,1},
-    {1,0,1}
-  },
-  { // O (8)
-    {1,1,1},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1}
-  },
-  { // R (9)
-    {1,1,0},
-    {1,0,1},
-    {1,1,0},
-    {1,0,1},
-    {1,0,1}
-  },
-  { // S (10)
-    {1,1,1},
-    {1,0,0},
-    {1,1,1},
-    {0,0,1},
-    {1,1,1}
-  },
-  { // T (11)
-    {1,1,1},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0}
-  },
-  { // U (12)
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,0,1},
-    {1,1,1}
-  },
-  { // W (13)
-    {1,0,1},
-    {1,0,1},
-    {1,1,1},
-    {1,1,1},
-    {1,0,1}
+  // 3 o'clock (right) - horizontal line
+  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 1 && col <= CENTER_X + CLOCK_RADIUS + 1) {
+    return true;
   }
-};
 
-// Day of week letter indices: 0=A, 1=D, 2=E, 3=F, 4=H, 5=I, 6=M, 7=N, 8=O, 9=R, 10=S, 11=T, 12=U, 13=W
-static const uint8_t DAY_LETTERS[7][3] = {
-  {10, 12, 7},  // SUN
-  {6, 8, 7},    // MON
-  {11, 12, 2},  // TUE
-  {13, 2, 1},   // WED
-  {11, 4, 12},  // THU
-  {3, 9, 5},    // FRI
-  {10, 0, 11}   // SAT
-};
+  // 6 o'clock (bottom) - vertical line
+  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 1 && row <= CENTER_Y + CLOCK_RADIUS + 1) {
+    return true;
+  }
+
+  // 9 o'clock (left) - horizontal line
+  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS - 1 && col <= CENTER_X - CLOCK_RADIUS + 1) {
+    return true;
+  }
+
+  return false;
+}
+
+// Simple integer sqrt approximation
+static int isqrt(int n) {
+  if (n == 0) return 0;
+  int x = n;
+  int y = (x + 1) / 2;
+  while (y < x) {
+    x = y;
+    y = (x + n / x) / 2;
+  }
+  return x;
+}
+
+// Check if a dot is on a line from center to a point
+static bool is_on_line(int col, int row, int end_x, int end_y) {
+  int dx = end_x - CENTER_X;
+  int dy = end_y - CENTER_Y;
+
+  // Use perpendicular distance formula
+  // Distance from point to line = |ax + by + c| / sqrt(a^2 + b^2)
+  // For line from (CENTER_X, CENTER_Y) to (end_x, end_y)
+
+  int px = col - CENTER_X;
+  int py = row - CENTER_Y;
+
+  // Cross product gives distance
+  int cross = px * dy - py * dx;
+  int len_squared = dx * dx + dy * dy;
+
+  if (len_squared == 0) return false;
+
+  // Check if point is between start and end
+  int dot = px * dx + py * dy;
+  if (dot < 0 || dot > len_squared) return false;
+
+  // Distance squared from point to line
+  int dist_squared = (cross * cross) / len_squared;
+
+  return dist_squared <= 1; // Thickness of 1
+}
+
+// Sine/cosine using lookup table (0-90 degrees in steps of 6)
+static const int sin_table[] = {0, 105, 208, 309, 407, 500, 588, 669, 743, 809, 866, 914, 951, 978, 995, 1000};
+static const int cos_table[] = {1000, 995, 978, 951, 914, 866, 809, 743, 669, 588, 500, 407, 309, 208, 105, 0};
+
+static int get_sin(int angle) {
+  angle = angle % 360;
+  if (angle < 0) angle += 360;
+
+  if (angle <= 90) return sin_table[angle / 6];
+  if (angle <= 180) return sin_table[(180 - angle) / 6];
+  if (angle <= 270) return -sin_table[(angle - 180) / 6];
+  return -sin_table[(360 - angle) / 6];
+}
+
+static int get_cos(int angle) {
+  return get_sin(angle + 90);
+}
+
+// Check if a dot is on the hour hand
+static bool is_on_hour_hand(int col, int row) {
+  // Calculate hour hand angle (in degrees, 0 = 12 o'clock, clockwise)
+  int hour_angle = (s_hours % 12) * 30 + s_minutes / 2;
+
+  // Calculate end point of hour hand (scaled by 1000)
+  int end_x = CENTER_X * 1000 + HOUR_HAND_LENGTH * 1000 * get_sin(hour_angle) / 1000;
+  int end_y = CENTER_Y * 1000 - HOUR_HAND_LENGTH * 1000 * get_cos(hour_angle) / 1000;
+
+  return is_on_line(col, row, end_x / 1000, end_y / 1000);
+}
+
+// Check if a dot is on the minute hand
+static bool is_on_minute_hand(int col, int row) {
+  // Calculate minute hand angle (in degrees, 0 = 12 o'clock, clockwise)
+  int minute_angle = s_minutes * 6;
+
+  // Calculate end point of minute hand (scaled by 1000)
+  int end_x = CENTER_X * 1000 + MINUTE_HAND_LENGTH * 1000 * get_sin(minute_angle) / 1000;
+  int end_y = CENTER_Y * 1000 - MINUTE_HAND_LENGTH * 1000 * get_cos(minute_angle) / 1000;
+
+  return is_on_line(col, row, end_x / 1000, end_y / 1000);
+}
+
+// Check if a dot is the center dot
+static bool is_center_dot(int col, int row) {
+  return (col == CENTER_X && row == CENTER_Y);
+}
 
 static bool is_dot_filled(int col, int row) {
-  // Layout:
-  // Rows 1-5: Date line (day of week + day of month on same line)
-  // Rows 6-7: spacing
-  // Rows 8-14: Time HH:MM (7 rows)
-  // Rows 15-16: empty
+  // Priority: hands > markers > circle
 
-  // DATE LINE (rows 1-5): Day of week + Day of month
-  if (row >= 1 && row <= 5) {
-    int letter_row = row - 1; // Map to 0-4 for letter pattern
-
-    // Layout across 17 columns:
-    // Cols 0-2: Letter 1 (day of week)
-    // Cols 3-5: Letter 2
-    // Cols 6-8: Letter 3
-    // Col 9: space
-    // Cols 10-12: Day tens digit
-    // Cols 13-15: Day ones digit
-    // Col 16: empty
-
-    // Day of week letters
-    int letter_idx = -1;
-    int letter_col = -1;
-
-    if (col >= 0 && col <= 2) {
-      letter_idx = DAY_LETTERS[s_day_of_week][0];
-      letter_col = col;
-    } else if (col >= 3 && col <= 5) {
-      letter_idx = DAY_LETTERS[s_day_of_week][1];
-      letter_col = col - 3;
-    } else if (col >= 6 && col <= 8) {
-      letter_idx = DAY_LETTERS[s_day_of_week][2];
-      letter_col = col - 6;
-    }
-
-    if (letter_idx >= 0 && letter_col >= 0 && letter_col <= 2) {
-      return LETTER_PATTERNS[letter_idx][letter_row][letter_col] == 1;
-    }
-
-    // Day of month digits (use 5 rows of digit pattern)
-    int digit = -1;
-    int digit_col = -1;
-
-    if (col >= 10 && col <= 12) {
-      digit = s_day_of_month / 10;
-      digit_col = col - 10;
-    } else if (col >= 13 && col <= 15) {
-      digit = s_day_of_month % 10;
-      digit_col = col - 13;
-    }
-
-    if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2 && letter_row < 7) {
-      return DIGIT_PATTERNS[digit][letter_row][digit_col] == 1;
-    }
-
-    return false;
+  // Center dot is always filled
+  if (is_center_dot(col, row)) {
+    return true;
   }
 
-  // TIME (rows 8-14)
-  if (row >= 8 && row <= 14) {
-    int digit_row = row - 8; // Map to 0-6 for digit pattern
+  // Hour and minute hands
+  if (is_on_hour_hand(col, row) || is_on_minute_hand(col, row)) {
+    return true;
+  }
 
-    // Digit layout across 17 columns:
-    // Cols 0-2: H tens
-    // Col 3: space
-    // Cols 4-6: H ones
-    // Col 7: space
-    // Col 8: colon (centered)
-    // Col 9: space
-    // Cols 10-12: M tens
-    // Col 13: space
-    // Cols 14-16: M ones
+  // Markers at 12, 3, 6, 9
+  if (is_on_marker(col, row)) {
+    return true;
+  }
 
-    int digit = -1;
-    int digit_col = -1;
-
-    if (col >= 0 && col <= 2) {
-      digit = s_hours / 10;
-      digit_col = col;
-    } else if (col >= 4 && col <= 6) {
-      digit = s_hours % 10;
-      digit_col = col - 4;
-    } else if (col == 8) {
-      // Colon - show dots at digit_row 1 and 5
-      if (digit_row == 1 || digit_row == 5) {
-        return true;
-      }
-      return false;
-    } else if (col >= 10 && col <= 12) {
-      digit = s_minutes / 10;
-      digit_col = col - 10;
-    } else if (col >= 14 && col <= 16) {
-      digit = s_minutes % 10;
-      digit_col = col - 14;
-    }
-
-    if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2) {
-      return DIGIT_PATTERNS[digit][digit_row][digit_col] == 1;
-    }
-    return false;
+  // Circle perimeter
+  if (is_on_circle(col, row)) {
+    return true;
   }
 
   return false;
@@ -364,16 +201,6 @@ static void update_time() {
 
   s_hours = tick_time->tm_hour;
   s_minutes = tick_time->tm_min;
-  s_day_of_month = tick_time->tm_mday;
-  s_day_of_week = tick_time->tm_wday; // 0 = Sunday, 1 = Monday, etc.
-
-  // Use 12-hour format if not 24h style
-  if (!clock_is_24h_style() && s_hours > 12) {
-    s_hours -= 12;
-  }
-  if (!clock_is_24h_style() && s_hours == 0) {
-    s_hours = 12;
-  }
 
   layer_mark_dirty(s_canvas_layer);
 }
