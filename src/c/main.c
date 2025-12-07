@@ -6,7 +6,7 @@
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
 #define CENTER_X 8
 #define CENTER_Y 8
-#define CLOCK_RADIUS 7.5
+#define CLOCK_RADIUS 8.0
 #define HOUR_HAND_LENGTH 4
 #define MINUTE_HAND_LENGTH 6
 
@@ -21,29 +21,29 @@ static bool is_on_circle(int col, int row) {
   int dy = row - CENTER_Y;
   int dist_squared = dx * dx + dy * dy;
 
-  // Approximate: radius 7.5 squared = 56.25, so check around 49-64
-  return (dist_squared >= 49 && dist_squared <= 64);
+  // Radius 8.0 squared = 64, check around 56-72
+  return (dist_squared >= 56 && dist_squared <= 72);
 }
 
-// Check if a dot is on a marker line (12, 3, 6, 9)
+// Check if a dot is on a marker line (12, 3, 6, 9) - inside the circle
 static bool is_on_marker(int col, int row) {
-  // 12 o'clock (top) - vertical line
-  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS - 1 && row <= CENTER_Y - CLOCK_RADIUS + 1) {
+  // 12 o'clock (top) - vertical line going inward
+  if (col == CENTER_X && row >= CENTER_Y - CLOCK_RADIUS + 1 && row <= CENTER_Y - CLOCK_RADIUS + 3) {
     return true;
   }
 
-  // 3 o'clock (right) - horizontal line
-  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 1 && col <= CENTER_X + CLOCK_RADIUS + 1) {
+  // 3 o'clock (right) - horizontal line going inward
+  if (row == CENTER_Y && col >= CENTER_X + CLOCK_RADIUS - 3 && col <= CENTER_X + CLOCK_RADIUS - 1) {
     return true;
   }
 
-  // 6 o'clock (bottom) - vertical line
-  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 1 && row <= CENTER_Y + CLOCK_RADIUS + 1) {
+  // 6 o'clock (bottom) - vertical line going inward
+  if (col == CENTER_X && row >= CENTER_Y + CLOCK_RADIUS - 3 && row <= CENTER_Y + CLOCK_RADIUS - 1) {
     return true;
   }
 
-  // 9 o'clock (left) - horizontal line
-  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS - 1 && col <= CENTER_X - CLOCK_RADIUS + 1) {
+  // 9 o'clock (left) - horizontal line going inward
+  if (row == CENTER_Y && col >= CENTER_X - CLOCK_RADIUS + 1 && col <= CENTER_X - CLOCK_RADIUS + 3) {
     return true;
   }
 
