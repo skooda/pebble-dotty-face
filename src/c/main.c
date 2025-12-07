@@ -1,8 +1,8 @@
 #include <pebble.h>
 
-#define GRID_SIZE 16
+#define GRID_SIZE 17
 #define DOT_SIZE 7
-#define DOT_MARGIN 2
+#define DOT_MARGIN 1
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
 
 static Window *s_main_window;
@@ -106,46 +106,44 @@ static const uint8_t DIGIT_PATTERNS[10][7][3] = {
 };
 
 static bool is_dot_filled(int col, int row) {
-  // Vertical centering: use rows 4-11 (8 rows) for digits (7 rows + 1 padding)
-  if (row < 4 || row > 11) {
+  // Vertical centering: use rows 5-11 (7 rows) for digits
+  if (row < 5 || row > 11) {
     return false;
   }
 
   int digit_row = row - 5; // Map to 0-6 for digit pattern
-  if (digit_row < 0 || digit_row > 6) {
-    return false;
-  }
 
-  // Digit layout across 16 columns:
-  // Cols 0-2: H tens
-  // Col 3: space
-  // Cols 4-6: H ones
-  // Cols 7-8: colon
-  // Cols 9-11: M tens
-  // Col 12: space
-  // Cols 13-15: M ones
+  // Digit layout across 17 columns:
+  // Col 0: space
+  // Cols 1-3: H tens
+  // Col 4: space
+  // Cols 5-7: H ones
+  // Cols 8-9: colon
+  // Cols 10-12: M tens
+  // Col 13: space
+  // Cols 14-16: M ones
 
   int digit = -1;
   int digit_col = -1;
 
-  if (col >= 0 && col <= 2) {
+  if (col >= 1 && col <= 3) {
     digit = s_hours / 10;
-    digit_col = col;
-  } else if (col >= 4 && col <= 6) {
+    digit_col = col - 1;
+  } else if (col >= 5 && col <= 7) {
     digit = s_hours % 10;
-    digit_col = col - 4;
-  } else if (col >= 7 && col <= 8) {
-    // Colon - show dots at rows 5 and 9 (digit_row 0 and 4)
-    if ((digit_row == 1 || digit_row == 5) && col == 7) {
+    digit_col = col - 5;
+  } else if (col >= 8 && col <= 9) {
+    // Colon - show dots at digit_row 1 and 5
+    if ((digit_row == 1 || digit_row == 5) && col == 8) {
       return true;
     }
     return false;
-  } else if (col >= 9 && col <= 11) {
+  } else if (col >= 10 && col <= 12) {
     digit = s_minutes / 10;
-    digit_col = col - 9;
-  } else if (col >= 13 && col <= 15) {
+    digit_col = col - 10;
+  } else if (col >= 14 && col <= 16) {
     digit = s_minutes % 10;
-    digit_col = col - 13;
+    digit_col = col - 14;
   }
 
   if (digit >= 0 && digit <= 9 && digit_col >= 0 && digit_col <= 2) {
@@ -166,7 +164,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   int offset_x = (bounds.size.w - grid_width) / 2;
   int offset_y = (bounds.size.h - grid_height) / 2;
 
-  // Draw 16x16 grid of dots
+  // Draw grid of dots
   for (int row = 0; row < GRID_SIZE; row++) {
     for (int col = 0; col < GRID_SIZE; col++) {
       int x = offset_x + col * DOT_SPACING;
