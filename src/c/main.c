@@ -87,7 +87,7 @@ static bool is_on_line(int col, int row, int end_x, int end_y) {
   // Distance squared from point to line
   int dist_squared = (cross * cross) / len_squared;
 
-  return dist_squared <= 1; // Thickness of 1
+  return dist_squared == 0; // Thickness of exactly 1 dot
 }
 
 // Sine/cosine using lookup table (0-90 degrees in steps of 6)
