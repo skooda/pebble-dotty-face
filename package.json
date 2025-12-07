@@ -1,6 +1,6 @@
 {
   "name": "dotty-face",
-  "author": "Your Name",
+  "author": "V3L <p@v3l.cz>",
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
@@ -16,7 +16,24 @@
     },
     "messageKeys": [],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "ICON_MENU",
+          "file": "icon_25.png",
+          "menuIcon": true
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_APP",
+          "file": "icon_48.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_STORE",
+          "file": "icon_144.png"
+        }
+      ]
     }
   }
 }
