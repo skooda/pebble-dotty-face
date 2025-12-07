@@ -62,32 +62,48 @@ static int isqrt(int n) {
   return x;
 }
 
-// Check if a dot is on a line from center to a point
+// Bresenham's line algorithm - check if a dot is on the line
 static bool is_on_line(int col, int row, int end_x, int end_y) {
-  int dx = end_x - CENTER_X;
-  int dy = end_y - CENTER_Y;
+  int x0 = CENTER_X;
+  int y0 = CENTER_Y;
+  int x1 = end_x;
+  int y1 = end_y;
 
-  // Use perpendicular distance formula
-  // Distance from point to line = |ax + by + c| / sqrt(a^2 + b^2)
-  // For line from (CENTER_X, CENTER_Y) to (end_x, end_y)
+  int dx = x1 - x0;
+  int dy = y1 - y0;
 
-  int px = col - CENTER_X;
-  int py = row - CENTER_Y;
+  if (dx < 0) dx = -dx;
+  if (dy < 0) dy = -dy;
 
-  // Cross product gives distance
-  int cross = px * dy - py * dx;
-  int len_squared = dx * dx + dy * dy;
+  int sx = x0 < x1 ? 1 : -1;
+  int sy = y0 < y1 ? 1 : -1;
+  int err = dx - dy;
 
-  if (len_squared == 0) return false;
+  int x = x0;
+  int y = y0;
 
-  // Check if point is between start and end
-  int dot = px * dx + py * dy;
-  if (dot < 0 || dot > len_squared) return false;
+  // Walk along the line using Bresenham's algorithm
+  while (1) {
+    if (x == col && y == row) {
+      return true;
+    }
 
-  // Distance squared from point to line
-  int dist_squared = (cross * cross) / len_squared;
+    if (x == x1 && y == y1) {
+      break;
+    }
 
-  return dist_squared == 0; // Thickness of exactly 1 dot
+    int e2 = 2 * err;
+    if (e2 > -dy) {
+      err -= dy;
+      x += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y += sy;
+    }
+  }
+
+  return false;
 }
 
 // Sine/cosine using lookup table (0-90 degrees in steps of 6)
