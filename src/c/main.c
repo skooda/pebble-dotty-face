@@ -1,11 +1,12 @@
 #include <pebble.h>
 
-#define GRID_SIZE 17
+#define GRID_WIDTH 17
+#define GRID_HEIGHT 21
 #define DOT_SIZE 7
 #define DOT_MARGIN 1
 #define DOT_SPACING (DOT_SIZE + DOT_MARGIN)
 #define CENTER_X 8
-#define CENTER_Y 8
+#define CENTER_Y 10
 #define CLOCK_RADIUS 8.0
 #define HOUR_HAND_LENGTH 4
 #define MINUTE_HAND_LENGTH 6
@@ -183,16 +184,16 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
   // Calculate grid dimensions
-  int grid_width = GRID_SIZE * DOT_SIZE + (GRID_SIZE - 1) * DOT_MARGIN;
-  int grid_height = GRID_SIZE * DOT_SIZE + (GRID_SIZE - 1) * DOT_MARGIN;
+  int grid_width = GRID_WIDTH * DOT_SIZE + (GRID_WIDTH - 1) * DOT_MARGIN;
+  int grid_height = GRID_HEIGHT * DOT_SIZE + (GRID_HEIGHT - 1) * DOT_MARGIN;
 
   // Center the grid
   int offset_x = (bounds.size.w - grid_width) / 2;
   int offset_y = (bounds.size.h - grid_height) / 2;
 
   // Draw grid of dots
-  for (int row = 0; row < GRID_SIZE; row++) {
-    for (int col = 0; col < GRID_SIZE; col++) {
+  for (int row = 0; row < GRID_HEIGHT; row++) {
+    for (int col = 0; col < GRID_WIDTH; col++) {
       int x = offset_x + col * DOT_SPACING;
       int y = offset_y + row * DOT_SPACING;
 
