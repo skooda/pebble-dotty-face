@@ -114,11 +114,12 @@ static bool is_dot_filled(int col, int row) {
   int digit_row = row - 5; // Map to 0-6 for digit pattern
 
   // Digit layout across 17 columns:
-  // Col 0: space
-  // Cols 1-3: H tens
-  // Col 4: space
-  // Cols 5-7: H ones
-  // Cols 8-9: colon
+  // Cols 0-2: H tens
+  // Col 3: space
+  // Cols 4-6: H ones
+  // Col 7: space
+  // Col 8: colon (centered)
+  // Col 9: space
   // Cols 10-12: M tens
   // Col 13: space
   // Cols 14-16: M ones
@@ -126,15 +127,15 @@ static bool is_dot_filled(int col, int row) {
   int digit = -1;
   int digit_col = -1;
 
-  if (col >= 1 && col <= 3) {
+  if (col >= 0 && col <= 2) {
     digit = s_hours / 10;
-    digit_col = col - 1;
-  } else if (col >= 5 && col <= 7) {
+    digit_col = col;
+  } else if (col >= 4 && col <= 6) {
     digit = s_hours % 10;
-    digit_col = col - 5;
-  } else if (col >= 8 && col <= 9) {
+    digit_col = col - 4;
+  } else if (col == 8) {
     // Colon - show dots at digit_row 1 and 5
-    if ((digit_row == 1 || digit_row == 5) && col == 8) {
+    if (digit_row == 1 || digit_row == 5) {
       return true;
     }
     return false;
